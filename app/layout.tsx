@@ -1,0 +1,45 @@
+import { Analytics } from '@vercel/analytics/next'
+import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Sidebar } from '@/components/sidebar'
+import './globals.css'
+
+const geistSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
+})
+
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+})
+
+export const metadata: Metadata = {
+  title: 'CADSentinel — Drawing Compliance Validation',
+  description:
+    'Automated compliance validation for hydraulic cylinder engineering drawings at JIT Industries.',
+  generator: 'v0.app',
+}
+
+export const viewport: Viewport = {
+  colorScheme: 'light',
+  themeColor: '#0f1e35',
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en" className={`bg-background ${geistSans.variable} ${geistMono.variable}`}>
+      <body className="font-sans antialiased">
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+        </div>
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
+}
