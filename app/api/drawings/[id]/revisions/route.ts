@@ -3,8 +3,7 @@ import { getRevisions } from "@/lib/mock-data"
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const { id } = await params
-  return NextResponse.json({ revisions: getRevisions(id) })
+  return NextResponse.json({ revisions: getRevisions(params.id) })
 }

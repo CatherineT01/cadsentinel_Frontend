@@ -3,9 +3,8 @@ import { getDrawingsByRule } from "@/lib/mock-data"
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ ruleId: string }> },
+  { params }: { params: { ruleId: string } },
 ) {
-  const { ruleId } = await params
-  const drawings = getDrawingsByRule(ruleId)
+  const drawings = getDrawingsByRule(params.ruleId)
   return NextResponse.json({ drawings })
 }
