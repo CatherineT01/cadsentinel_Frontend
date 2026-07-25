@@ -2,20 +2,32 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { Search } from "lucide-react"
-import { useRuns } from "@/lib/api"
+import { Search, FileBarChart } from "lucide-react"
+import { useRuns, generateBatchReport } from "@/lib/api"
 import { PageBody, PageHeader, Card, LoadingState, ErrorState, EmptyState } from "@/components/shell"
 import { GradeBadge } from "@/components/badges"
-import { formatDateTime, ragasColor } from "@/lib/ui"
+import { formatDateTime } from "@/lib/ui"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/providers"
 
 export default function RunsPage() {
   const { data, error, isLoading } = useRuns()
+  const { toast } = useToast()
   const [query, setQuery] = useState("")
 
   const filtered = useMemo(() => {
     const runs = data?.runs ?? []
     return runs.filter((r) => r.drawing_name.toLowerCase().includes(query.toLowerCase()))
   }, [data, query])
+
+  async function handleBatchReport(runId: string) {
+    try {
+      await generateBatchReport(runId)
+      toast("Batch report generated", "success")
+    } catch {
+      toast("Failed to generate batch report", "error")
+    }
+  }
 
   return (
     <>
@@ -54,8 +66,8 @@ export default function RunsPage() {
                     <th className="px-4 py-2.5 text-center font-medium">Fail</th>
                     <th className="px-4 py-2.5 text-center font-medium">Warn</th>
                     <th className="px-4 py-2.5 text-center font-medium">Review</th>
-                    <th className="px-4 py-2.5 font-medium">RAGAS</th>
                     <th className="px-4 py-2.5 font-medium">Grade</th>
+                    <th className="px-4 py-2.5 font-medium" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -85,11 +97,18 @@ export default function RunsPage() {
                       <td className="px-4 py-3 text-center font-medium tabular-nums text-blue-600">
                         {r.review_count}
                       </td>
-                      <td className={`px-4 py-3 font-medium tabular-nums ${ragasColor(r.ragas_composite)}`}>
-                        {r.ragas_composite.toFixed(2)}
-                      </td>
                       <td className="px-4 py-3">
                         <GradeBadge grade={r.grade} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleBatchReport(r.id)}
+                          title="Generate batch report"
+                        >
+                          <FileBarChart className="size-3.5" /> Report
+                        </Button>
                       </td>
                     </tr>
                   ))}

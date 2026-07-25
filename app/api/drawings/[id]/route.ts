@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getDrawingDetail } from "@/lib/mock-data"
+import { deleteDrawingCompletely, getDrawingDetail } from "@/lib/mock-data"
 
 export async function GET(
   _request: Request,
@@ -11,4 +11,13 @@ export async function GET(
     return NextResponse.json({ error: "Drawing not found" }, { status: 404 })
   }
   return NextResponse.json(detail)
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params
+  deleteDrawingCompletely(id)
+  return NextResponse.json({ ok: true })
 }

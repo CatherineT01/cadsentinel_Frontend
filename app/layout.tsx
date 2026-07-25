@@ -2,6 +2,9 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Sidebar } from '@/components/sidebar'
+import { ToastProvider } from '@/components/providers'
+import { UploadProvider } from '@/components/upload-context'
+import { ShortcutsButton } from '@/components/shortcuts-button'
 import './globals.css'
 
 const geistSans = Geist({
@@ -22,7 +25,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light',
+  colorScheme: 'light dark',
   themeColor: '#0f1e35',
 }
 
@@ -34,10 +37,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`bg-background ${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-        </div>
+        <ToastProvider>
+          <UploadProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+            </div>
+            <ShortcutsButton />
+          </UploadProvider>
+        </ToastProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

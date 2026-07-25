@@ -27,6 +27,9 @@ export interface Drawing {
   last_run_date: string
   pass_rate: number
   grade: Grade
+  type_overridden?: boolean
+  last_reviewed_by?: string | null
+  last_reviewed_at?: string | null
 }
 
 export interface Rule {
@@ -68,6 +71,15 @@ export interface RuleResult {
   issue_description: string
   suggested_fix: string
   ragas_composite: number
+  flagged?: boolean
+  notes?: RuleNote[]
+}
+
+export interface RuleNote {
+  id: string
+  text: string
+  author: string
+  created_at: string
 }
 
 export interface Classification {
@@ -114,4 +126,49 @@ export interface DrawingDetail {
   classification: Classification
   latest_run: Run
   results: (RuleResult & { rule: Rule })[]
+  revisions: Revision[]
+}
+
+export interface Revision {
+  run_id: string
+  timestamp: string
+  grade: Grade
+  pass_count: number
+  fail_count: number
+  warning_count: number
+  review_count: number
+  is_current: boolean
+}
+
+export interface DuplicateInfo {
+  filename: string
+  processed_at: string
+  drawing_id: string
+}
+
+export interface UploadQueueItem {
+  id: string
+  filename: string
+  status: "queued" | "uploading" | "parsing" | "running_checks" | "complete" | "failed"
+  progress: number
+  sections: { name: Section; status: "pending" | "running" | "pass" | "fail" }[]
+  error?: string
+  result?: {
+    drawing_id: string
+    grade: Grade
+    pass_count: number
+    fail_count: number
+    warning_count: number
+  }
+}
+
+export interface BatchRun {
+  id: string
+  started_at: string
+  completed_at: string | null
+  total: number
+  passed: number
+  failed: number
+  errors: number
+  drawing_ids: string[]
 }

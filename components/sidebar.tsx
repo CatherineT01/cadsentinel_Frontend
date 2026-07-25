@@ -14,6 +14,10 @@ import {
   Ruler,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { useUpload } from "@/components/upload-context"
+import { UploadCloud } from "lucide-react"
+import { useKeyboardShortcuts } from "@/lib/use-shortcuts"
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -69,8 +73,29 @@ function Brand() {
   )
 }
 
+function UploadButton() {
+  const { openUpload } = useUpload()
+  return (
+    <div className="px-3 pb-2">
+      <button
+        type="button"
+        onClick={openUpload}
+        className="flex w-full items-center gap-2.5 rounded-md bg-sidebar-primary px-3 py-2 text-sm font-medium text-sidebar-primary-foreground transition-colors hover:bg-sidebar-primary/90"
+      >
+        <UploadCloud className="size-4 shrink-0" />
+        Upload Drawings
+      </button>
+    </div>
+  )
+}
+
 export function Sidebar() {
   const [open, setOpen] = useState(false)
+  const { openUpload } = useUpload()
+
+  useKeyboardShortcuts([
+    { key: "u", description: "Open upload dialog", handler: openUpload },
+  ])
 
   return (
     <>
@@ -97,13 +122,17 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <Brand />
+        <UploadButton />
         <NavLinks />
         <div className="border-t border-sidebar-border px-5 py-4">
-          <p className="text-[11px] leading-relaxed text-sidebar-foreground/60">
-            Compliance engine v3.2
-            <br />
-            21 rules · 9 drawing types
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] leading-relaxed text-sidebar-foreground/60">
+              Compliance engine v3.2
+              <br />
+              21 rules · 9 drawing types
+            </p>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 

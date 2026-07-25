@@ -1,10 +1,15 @@
-import useSWR from "swr"
+import useSWR, { mutate } from "swr"
 import type {
+  BatchRun,
   Drawing,
   DrawingDetail,
   DrawingType,
+  DuplicateInfo,
   GoldStandardEntry,
+  Revision,
   Rule,
+  RuleNote,
+  RuleStatus,
   Run,
   Section,
   Stats,
@@ -19,11 +24,35 @@ export const fetcher = async (url: string) => {
   return res.json()
 }
 
-/*
- * Swap-friendly API layer. Each hook maps 1:1 to a REST endpoint so the
- * mock routes can be replaced with real backend endpoints without touching
- * the components that consume them.
- */
+export const api = {
+  async post<T>(url: string, body?: unknown): Promise<T> {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    if (!res.ok) throw new Error("Request failed")
+    return res.json() as Promise<T>
+  },
+  async patch<T>(url: string, body?: unknown): Promise<T> {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    if (!res.ok) throw new Error("Request failed")
+    return res.json() as Promise<T>
+  },
+  async del<T>(url: string): Promise<T> {
+    const res = await fetch(url, { method: "DELETE" })
+    if (!res.ok) throw new Error("Request failed")
+    return res.json() as Promise<T>
+  },
+}
+
+/* ------------------------------------------------------------------ */
+/* SWR data hooks                                                      */
+/* ------------------------------------------------------------------ */
 
 export function useDrawings() {
   return useSWR<{ drawings: Drawing[] }>("/api/drawings", fetcher)
@@ -52,3 +81,63 @@ export function useStats() {
 export function useGoldStandard() {
   return useSWR<{ entries: GoldStandardEntry[] }>("/api/gold-standard", fetcher)
 }
+
+export function useRevisions(drawingId: string) {
+  return useSWR<{ revisions: Revision[] }>(
+    drawingId ? `/api/drawings/${drawingId}/revisions` : null,
+    fetcher,
+  )
+}
+
+export function useDrawingsByRule(ruleId: string) {
+  return useSWR<{ drawings: { drawing_id: string; drawing_name: string; drawing_type: DrawingType; grade: string; status: RuleStatus }[] }>(
+    ruleId ? `/api/rules/${ruleId}/drawings` : null,
+    fetcher,
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Mutations                                                           */
+/* ------------------------------------------------------------------ */
+
+export async function checkDuplicates(filenames: string[]): Promise<{ duplicates: DuplicateInfo[] }> {
+  return api.post("/api/upload/check-duplicates", { filenames })
+}
+
+export async function toggleFlag(runId: string, ruleId: string, flagged: boolean) {
+  const res = await api.post<{ flagged: boolean }>(
+    `/api/rule-results/${encodeURIComponent(runId)}/${encodeURIComponent(ruleId)}/flag`,
+    { flagged },
+  )
+  await mutate(`/api/drawings/${runId.split("-")[0]}`)
+  return res
+}
+
+export async function addNoteApi(runId: string, ruleId: string, text: string, author: string): Promise<RuleNote> {
+  return api.post(`/api/rule-results/${encodeURIComponent(runId)}/${encodeURIComponent(ruleId)}/notes`, {
+    text,
+    author,
+  })
+}
+
+export async function logReview(drawingId: string, reviewer: string) {
+  return api.post(`/api/drawings/${encodeURIComponent(drawingId)}/review-log`, { reviewer })
+}
+
+export async function overrideType(drawingId: string, type: DrawingType) {
+  return api.patch(`/api/drawings/${encodeURIComponent(drawingId)}/type`, { type })
+}
+
+export async function deleteDrawing(drawingId: string) {
+  return api.del(`/api/drawings/${encodeURIComponent(drawingId)}`)
+}
+
+export async function uploadDrawing(filename: string): Promise<{ drawing: Drawing; run: Run }> {
+  return api.post("/api/upload", { filename })
+}
+
+export async function generateBatchReport(runId: string): Promise<{ ok: boolean }> {
+  return api.post(`/api/runs/${encodeURIComponent(runId)}/report`)
+}
+
+export { mutate }

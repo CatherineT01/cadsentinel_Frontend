@@ -1,14 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { FileCheck2, GaugeCircle, Award, Sparkles, ChevronRight } from "lucide-react"
+import { FileCheck2, GaugeCircle, Award, ChevronRight } from "lucide-react"
 import { useStats } from "@/lib/api"
 import { PageBody, PageHeader, Card, LoadingState, ErrorState } from "@/components/shell"
 import { StatCard } from "@/components/stat-card"
 import { PassRateChart } from "@/components/pass-rate-chart"
-import { GradeBadge, TypeBadge } from "@/components/badges"
+import { GradeBadge } from "@/components/badges"
 import { GRADE_META } from "@/lib/ui"
-import { formatDateTime, pct, ragasColor } from "@/lib/ui"
+import { formatDateTime, pct } from "@/lib/ui"
 import type { Grade } from "@/lib/types"
 
 export default function DashboardPage() {
@@ -27,7 +27,7 @@ export default function DashboardPage() {
           <ErrorState />
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <StatCard
                 label="Drawings Processed"
                 value={String(data.stats.total_drawings)}
@@ -46,13 +46,6 @@ export default function DashboardPage() {
                       ? "text-amber-600"
                       : "text-red-600"
                 }
-              />
-              <StatCard
-                label="Avg RAGAS Composite"
-                value={data.stats.avg_ragas_composite.toFixed(2)}
-                sub="Retrieval · evidence · decision · faithfulness"
-                icon={Sparkles}
-                valueClassName={ragasColor(data.stats.avg_ragas_composite)}
               />
               <GradeDistributionCard distribution={data.stats.grade_distribution} />
             </div>

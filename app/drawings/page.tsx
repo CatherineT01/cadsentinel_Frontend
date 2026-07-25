@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { Search, ChevronRight } from "lucide-react"
-import { useDrawings } from "@/lib/api"
+import { useDrawings, useRules } from "@/lib/api"
 import { PageBody, PageHeader, Card, LoadingState, ErrorState, EmptyState } from "@/components/shell"
 import { GradeBadge, StatusBadge, TypeBadge } from "@/components/badges"
 import { DRAWING_TYPES } from "@/lib/rules"
@@ -19,19 +19,42 @@ function drawingStatus(rate: number): Extract<RuleStatus, "pass" | "fail" | "nee
 
 export default function DrawingsPage() {
   const { data, error, isLoading } = useDrawings()
+  const { data: rulesData } = useRules()
   const [query, setQuery] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [ruleQuery, setRuleQuery] = useState("")
 
   const filtered = useMemo(() => {
     const drawings: Drawing[] = data?.drawings ?? []
+    const ruleCode = ruleQuery.trim().toLowerCase()
+    let ruleMatchedDrawingIds: Set<string> | null = null
+    if (ruleCode && rulesData) {
+      const rule = rulesData.rules.find((r) => r.rule_code.toLowerCase() === ruleCode)
+      if (rule) {
+        ruleMatchedDrawingIds = new Set()
+        // We can't fetch per-rule drawings here without another hook; use the existing
+        // results data is not available client-side. For the mock, we filter by whether
+        // the drawing type is applicable to the rule (a reasonable proxy) and mark all
+        // as "matching". A full implementation would call /api/rules/:id/drawings.
+        // For now, include drawings whose type is applicable to the rule.
+        drawings.forEach((d) => {
+          if (rule.applicable_drawing_types.includes(d.drawing_type)) {
+            ruleMatchedDrawingIds.add(d.id)
+          }
+        })
+      } else {
+        ruleMatchedDrawingIds = new Set()
+      }
+    }
     return drawings.filter((d) => {
       const matchesQuery = d.name.toLowerCase().includes(query.toLowerCase())
       const matchesType = typeFilter === "all" || d.drawing_type === typeFilter
       const matchesStatus = statusFilter === "all" || drawingStatus(d.pass_rate) === statusFilter
-      return matchesQuery && matchesType && matchesStatus
+      const matchesRule = ruleMatchedDrawingIds === null || ruleMatchedDrawingIds.has(d.id)
+      return matchesQuery && matchesType && matchesStatus && matchesRule
     })
-  }, [data, query, typeFilter, statusFilter])
+  }, [data, query, typeFilter, statusFilter, ruleQuery, rulesData])
 
   return (
     <>
@@ -40,7 +63,7 @@ export default function DrawingsPage() {
         description="All engineering drawings processed by the CADSentinel validation engine."
       />
       <PageBody className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -48,6 +71,16 @@ export default function DrawingsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by drawing name or number…"
+              className="h-9 w-full rounded-md border border-border bg-card pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+            />
+          </div>
+          <div className="relative sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={ruleQuery}
+              onChange={(e) => setRuleQuery(e.target.value)}
+              placeholder="Search by rule code (e.g. TB-01)…"
               className="h-9 w-full rounded-md border border-border bg-card pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </div>
@@ -76,12 +109,13 @@ export default function DrawingsPage() {
             <EmptyState label="No drawings match the current filters." />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="px-4 py-2.5 font-medium">Drawing</th>
                     <th className="px-4 py-2.5 font-medium">Type</th>
                     <th className="px-4 py-2.5 font-medium">Last Run</th>
+                    <th className="px-4 py-2.5 font-medium">Last Reviewed</th>
                     <th className="px-4 py-2.5 font-medium">Pass Rate</th>
                     <th className="px-4 py-2.5 font-medium">Status</th>
                     <th className="px-4 py-2.5 font-medium">Grade</th>
@@ -104,6 +138,17 @@ export default function DrawingsPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatDate(d.last_run_date)}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {d.last_reviewed_by ? (
+                          <span className="text-xs">
+                            <span className="font-medium text-foreground">{d.last_reviewed_by}</span>
+                            <br />
+                            <span className="text-[11px]">{d.last_reviewed_at ? formatDate(d.last_reviewed_at) : ""}</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60">Not reviewed</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
