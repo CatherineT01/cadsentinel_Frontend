@@ -1,18 +1,18 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 import { Sidebar } from '@/components/sidebar'
 import { ToastProvider } from '@/components/providers'
 import { UploadProvider } from '@/components/upload-context'
 import { ShortcutsButton } from '@/components/shortcuts-button'
 import './globals.css'
 
-const geistSans = Inter({
+const geistSans = Geist({
   subsets: ['latin'],
   variable: '--font-geist-sans',
 })
 
-const geistMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-geist-mono',
 })

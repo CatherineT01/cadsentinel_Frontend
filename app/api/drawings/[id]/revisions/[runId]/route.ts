@@ -3,9 +3,10 @@ import { getHistoricalRunDetail } from "@/lib/mock-data"
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string; runId: string } },
+  { params }: { params: Promise<{ id: string; runId: string }> },
 ) {
-  const detail = getHistoricalRunDetail(params.id, params.runId)
+  const { id, runId } = await params
+  const detail = getHistoricalRunDetail(id, runId)
   if (!detail) {
     return NextResponse.json({ error: "Run not found" }, { status: 404 })
   }
