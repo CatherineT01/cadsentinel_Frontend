@@ -3,10 +3,9 @@ import { deleteDrawingCompletely, getDrawingDetail } from "@/lib/mock-data"
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const { id } = await params
-  const detail = getDrawingDetail(id)
+  const detail = getDrawingDetail(params.id)
   if (!detail) {
     return NextResponse.json({ error: "Drawing not found" }, { status: 404 })
   }
@@ -15,9 +14,8 @@ export async function GET(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: { id: string } },
 ) {
-  const { id } = await params
-  deleteDrawingCompletely(id)
+  deleteDrawingCompletely(params.id)
   return NextResponse.json({ ok: true })
 }

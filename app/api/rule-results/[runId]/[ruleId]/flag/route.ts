@@ -3,11 +3,10 @@ import { setFlag } from "@/lib/mock-data"
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ runId: string; ruleId: string }> },
+  { params }: { params: { runId: string; ruleId: string } },
 ) {
-  const { runId, ruleId } = await params
   const body = await request.json().catch(() => ({}))
   const flagged = Boolean(body.flagged)
-  setFlag(runId, ruleId, flagged)
+  setFlag(params.runId, params.ruleId, flagged)
   return NextResponse.json({ flagged })
 }
