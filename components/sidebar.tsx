@@ -8,7 +8,6 @@ import {
   FileStack,
   History,
   Grid3x3,
-  ShieldCheck,
   Menu,
   X,
   Ruler,
@@ -24,7 +23,6 @@ const NAV = [
   { href: "/drawings", label: "Drawings", icon: FileStack },
   { href: "/runs", label: "Run History", icon: History },
   { href: "/rules", label: "Rule Matrix", icon: Grid3x3 },
-  { href: "/gold-standard", label: "Gold Standard", icon: ShieldCheck },
 ]
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

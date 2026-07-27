@@ -5,7 +5,6 @@ import type {
   DrawingDetail,
   DrawingType,
   DuplicateInfo,
-  GoldStandardEntry,
   Grade,
   RagasScores,
   Revision,
@@ -54,20 +53,20 @@ interface DrawingSeed {
 }
 
 const DRAWING_SEEDS: DrawingSeed[] = [
-  { name: "JIT-204518-A1 Rod End Head", type: "REH", confidence: 0.97 },
-  { name: "JIT-204519-B2 Cap End Head", type: "CEH", confidence: 0.94 },
-  { name: "JIT-204520-A0 Gland Assembly", type: "Gland", confidence: 0.91 },
-  { name: "JIT-204521-C1 Piston 4.00 Bore", type: "Piston", confidence: 0.98 },
-  { name: "JIT-204522-A3 Barrel Tube 4x24", type: "Barrel", confidence: 0.96 },
-  { name: "JIT-204523-A1 Piston Rod 1.75", type: "Rod", confidence: 0.99 },
-  { name: "JIT-204524-B0 Mounting Bracket", type: "Acc/Misc", confidence: 0.82 },
-  { name: "JIT-204525-D2 Hydraulic Cylinder Assy", type: "Assy", confidence: 0.95 },
-  { name: "JIT-204526-A0 Weld Procedure PRO-14", type: "PRO", confidence: 0.88 },
-  { name: "JIT-204527-A1 Rod End Head 6.00", type: "REH", confidence: 0.93 },
-  { name: "JIT-204528-A2 Barrel Tube 5x36", type: "Barrel", confidence: 0.9 },
-  { name: "JIT-204529-B1 Cushion Gland", type: "Gland", confidence: 0.86 },
-  { name: "JIT-204530-A0 Clevis Accessory", type: "Acc/Misc", confidence: 0.79 },
-  { name: "JIT-204531-C0 Tie-Rod Cylinder Assy", type: "Assy", confidence: 0.97 },
+  { name: "G250.dwg", type: "REH", confidence: 0.97 },
+  { name: "HD400-REV2.dwg", type: "CEH", confidence: 0.94 },
+  { name: "GLND-200-A.dwg", type: "Gland", confidence: 0.91 },
+  { name: "CYL-1234-A.dwg", type: "Piston", confidence: 0.98 },
+  { name: "BARREL-556-B.dwg", type: "Barrel", confidence: 0.96 },
+  { name: "ROD-789-C.dwg", type: "Rod", confidence: 0.99 },
+  { name: "BRKT-045.dwg", type: "Acc/Misc", confidence: 0.82 },
+  { name: "ASSY-3000.dwg", type: "Assy", confidence: 0.95 },
+  { name: "WELD-PRO-14.dwg", type: "PRO", confidence: 0.88 },
+  { name: "REH-600-A.dwg", type: "REH", confidence: 0.93 },
+  { name: "BARREL-536.dwg", type: "Barrel", confidence: 0.9 },
+  { name: "GLND-CUSH-01.dwg", type: "Gland", confidence: 0.86 },
+  { name: "CLVS-022.dwg", type: "Acc/Misc", confidence: 0.79 },
+  { name: "ASSY-TIEROD-02.dwg", type: "Assy", confidence: 0.97 },
 ]
 
 const EVIDENCE_BANK: Record<
@@ -140,7 +139,6 @@ interface Dataset {
   drawings: Drawing[]
   runs: Run[]
   ruleResults: RuleResult[]
-  goldStandard: GoldStandardEntry[]
   classifications: Record<string, { drawing_type: DrawingType; confidence: number }>
 }
 
@@ -161,7 +159,6 @@ function buildDataset(): Dataset {
   const drawings: Drawing[] = []
   const runs: Run[] = []
   const ruleResults: RuleResult[] = []
-  const goldStandard: GoldStandardEntry[] = []
   const classifications: Dataset["classifications"] = {}
 
   const now = Date.now()
@@ -254,45 +251,10 @@ function buildDataset(): Dataset {
         grade: latestRun.grade,
       })
 
-      // Gold-standard entries: sample a few rules from the latest run
-      const sample = rules.slice(0, Math.min(4, rules.length))
-      sample.forEach((rule, si) => {
-        const sysResult = ruleResults.find(
-          (rr) => rr.run_id === latestRun!.id && rr.rule_id === rule.id,
-        )
-        if (!sysResult) return
-        const systemVerdict = sysResult.status
-        // Gold verdict mostly agrees, occasionally differs
-        const disagree = rng() < 0.28
-        let goldVerdict: RuleStatus = systemVerdict
-        if (disagree) {
-          const options: RuleStatus[] = ["pass", "fail", "warning", "needs_review"]
-          goldVerdict = options[Math.floor(rng() * options.length)]
-        }
-        if (systemVerdict === "needs_review" && goldVerdict === "needs_review") {
-          goldVerdict = rng() < 0.5 ? "pass" : "fail"
-        }
-        goldStandard.push({
-          id: `GS-${drawingId}-${rule.id}`,
-          drawing_id: drawingId,
-          drawing_name: seed.name,
-          rule_id: rule.id,
-          rule_code: rule.rule_code,
-          section: rule.section,
-          system_verdict: systemVerdict,
-          gold_verdict: goldVerdict,
-          reviewer: reviewers[(di + si) % reviewers.length],
-          reviewed_at: new Date(now - (di + 2) * 24 * 60 * 60 * 1000).toISOString(),
-          note:
-            systemVerdict === goldVerdict
-              ? "System verdict confirmed against source DWG."
-              : "Reviewer overrode automated verdict after manual inspection.",
-        })
-      })
     }
   })
 
-  return { drawings, runs, ruleResults, goldStandard, classifications }
+  return { drawings, runs, ruleResults, classifications }
 }
 
 // Build once per server process
@@ -756,10 +718,6 @@ export function getRules() {
     const pass_rate = total > 0 ? round(pass / total, 3) : null
     return { ...rule, pass_rate, evaluations: total }
   })
-}
-
-export function getGoldStandard(): GoldStandardEntry[] {
-  return [...DATA.goldStandard].sort((a, b) => a.drawing_name.localeCompare(b.drawing_name))
 }
 
 export function getStats(): Stats {

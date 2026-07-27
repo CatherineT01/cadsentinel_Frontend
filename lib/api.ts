@@ -5,7 +5,6 @@ import type {
   DrawingDetail,
   DrawingType,
   DuplicateInfo,
-  GoldStandardEntry,
   Revision,
   Rule,
   RuleNote,
@@ -76,10 +75,6 @@ export function useRules() {
 
 export function useStats() {
   return useSWR<{ stats: Stats; recent_runs: Run[] }>("/api/stats", fetcher)
-}
-
-export function useGoldStandard() {
-  return useSWR<{ entries: GoldStandardEntry[] }>("/api/gold-standard", fetcher)
 }
 
 export function useRevisions(drawingId: string) {

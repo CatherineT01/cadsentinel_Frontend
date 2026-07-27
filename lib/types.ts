@@ -87,20 +87,6 @@ export interface Classification {
   confidence: number
 }
 
-export interface GoldStandardEntry {
-  id: string
-  drawing_id: string
-  drawing_name: string
-  rule_id: string
-  rule_code: string
-  section: Section
-  system_verdict: RuleStatus
-  gold_verdict: RuleStatus
-  reviewer: string
-  reviewed_at: string
-  note: string
-}
-
 export interface DrawingTypeStat {
   drawing_type: DrawingType
   total: number
